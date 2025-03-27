@@ -1,0 +1,243 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --font-display: 'Rajdhani', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-body);
+    min-height: 100vh;
+}
+
+.tablet-container {
+    width: 66.67vw !important;
+    height: 74.07vh !important; 
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.95);
+    border-radius: 0.833vw;
+    overflow: hidden;
+    border: 0.052vw solid rgba(99, 102, 241, 0.2);
+    box-shadow: 0 1.302vw 2.604vw -0.625vw rgba(0, 0, 0, 0.5);
+}
+
+.cart-container {
+    width: 18.229vw !important; 
+    flex-shrink: 0;
+    background: rgba(15, 23, 42, 0.95);
+    border-radius: 0.625vw;
+    border: 0.052vw solid rgba(99, 102, 241, 0.2);
+    padding: 0.521vw; 
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.cart-items {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.26vw;
+}
+
+.item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: clamp(0.75rem, 2vw, 0.875rem); 
+    line-height: 1.2;
+    max-width: 100%;
+    display: block;
+}
+
+.cart-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.notification-container {
+    position: absolute;
+    top: 1.852vh; 
+    right: 1.042vw;
+    z-index: 100;
+    transform: translateY(0);
+    transition: all 0.3s ease;
+    animation: slideInNotification 0.3s ease;
+    background: rgba(15, 23, 42, 0.95);
+    border-radius: 0.625vw;
+    padding: 0.521vw 0.781vw;
+    box-shadow: 0 0.521vw 1.302vw -0.26vw rgba(0, 0, 0, 0.3);
+    border: 0.052vw solid;
+    min-width: 15.625vw;
+    max-width: 20.833vw; 
+}
+
+@keyframes slideInNotification {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.notification-success {
+    border-color: rgba(16, 185, 129, 0.2);
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+}
+
+.notification-error {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+}
+
+.font-display {
+    font-family: var(--font-display);
+}
+
+::-webkit-scrollbar {
+    width: 0.313vw; 
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 0.417vw; 
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.5);
+    border-radius: 0.417vw;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(6, 182, 212, 0.7);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(1.042vw); opacity: 0; } 
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.menu {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.menu > div {
+    animation: slideIn 0.3s ease-out;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+input[type="number"] {
+    background-color: #2d3748;
+    border: 0.052vw solid #4a5568;
+    padding: 0.625vw; 
+    color: white;
+    font-size: 0.729vw; 
+    border-radius: 0.417vw;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+    box-sizing: border-box;
+}
+
+input[type="number"]::placeholder {
+    color: #cbd5e0;
+}
+
+.input-field {
+    width: 100%;
+    background-color: #2d3748;
+    border: 0.052vw solid #4a5568;
+    border-radius: 0.417vw;
+    padding: 0.625vw;
+    color: white;
+    font-size: 0.729vw;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+    box-sizing: border-box;
+}
+
+.input-field::placeholder {
+    color: #cbd5e0;
+}
+
+.input-field:focus {
+    border-color: #06b6d4;
+    outline: none;
+    box-shadow: 0 0 0 0.052vw rgba(6, 182, 212, 0.6);
+}
+
+.input-field2 {
+    width: 100%;
+    left: 0.104vw; 
+    background-color: #2d3748;
+    border: 0.052vw solid #4a5568;
+    border-radius: 0.417vw;
+    padding: 0.625vw;
+    color: white;
+    font-size: 0.729vw;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+    box-sizing: border-box;
+}
+
+.input-field2::placeholder {
+    color: #cbd5e0;
+}
+
+.input-field2:focus {
+    border-color: #06b6d4;
+    outline: none;
+    box-shadow: 0 0 0 0.052vw rgba(6, 182, 212, 0.6);
+}
+
+input[type="number"].input-field2 {
+    background-color: #2d3748;
+    border: 0.052vw solid #4a5568;
+    padding: 0.625vw;
+    color: white;
+    font-size: 0.729vw;
+    border-radius: 0.417vw;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+    box-sizing: border-box;
+    margin-left: 0.104vw;
+}
+
+input[type="number"].input-field2 + span {
+    margin-left: 0.521vw;
+}

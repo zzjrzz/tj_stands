@@ -1,0 +1,41 @@
+{
+    "menu": {
+      "rent_stand": "Rent Stand",
+      "browse_shop": "Browse Shop",
+      "available": "Available",
+      "edit_stand": "Edit Stand",
+      "close": "Close",
+      "your_inventory": "Your Inventory",
+      "selected_items": "Selected Items",
+      "available_items": "Available Items",
+      "shopping_cart": "Shopping Cart",
+      "total": "Total",
+      "pay_cash": "Pay with Cash",
+      "pay_bank": "Pay with Bank"
+    },
+    "inputs": {
+      "stand_title": "Stand Title",
+      "stand_title_placeholder": "Enter stand title",
+      "description": "Description",
+      "description_placeholder": "Enter description",
+      "rental_duration": "Rental Duration (hours)",
+      "quantity": "Quantity",
+      "price": "Price",
+      "stock": "Stock"
+    },
+    "notifications": {
+      "stand_rented": "Stand rented successfully",
+      "purchase_success": "Purchase successful",
+      "insufficient_funds": "Insufficient funds",
+      "insufficient_funds_bank": "Insufficient funds in bank",
+      "invalid_duration": "Invalid rental duration",
+      "stand_unavailable": "Stand is already rented",
+      "item_unavailable": "Item not available in requested quantity",
+      "item_already_selected": "Item already selected",
+      "insufficient_inventory": "Not enough items in inventory",
+      "set_quantity_price": "Please set quantity and price for all items",
+      "max_quantity": "Maximum quantity for this item is %s",
+      "cart_empty": "Cart is empty",
+      "sale_notification": "Someone purchased items for $%s"
+    }
+  }
