@@ -1,14 +1,9 @@
 local ESX = exports['es_extended']:getSharedObject()
-local PlayerData = {}
 local stands = {}
 local currentStand = nil
 lib.locale()
 
 CreateThread(function()
-    while ESX.GetPlayerData().job == nil do
-        Wait(100)
-    end
-    PlayerData = ESX.GetPlayerData()
     InitializeStands()
 end)
 
@@ -177,11 +172,6 @@ AddEventHandler('onResourceStop', function(resourceName)
             exports.ox_target:removeLocalEntity(prop)
         end
     end
-end)
-
-AddEventHandler('onResourceStart', function(resourceName)
-    if GetCurrentResourceName() ~= resourceName then return end
-    InitializeStands()
 end)
 
 CreateThread(function()
