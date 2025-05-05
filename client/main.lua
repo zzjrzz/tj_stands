@@ -1,4 +1,4 @@
-local ESX = exports['es_extended']:getSharedObject()
+local QBCore = exports['qb-core']:GetCoreObject()
 local stands = {}
 local currentStand = nil
 lib.locale()
@@ -16,29 +16,30 @@ function CreateStandAtLocation(standConfig)
     FreezeEntityPosition(prop, true)
     SetEntityAsMissionEntity(prop, true, true)
 
-    exports.ox_target:addLocalEntity(prop, {
-        {
-            name = 'tj_stands_rent_' .. prop,
-            icon = 'fas fa-shopping-cart',
-            label = locale('menu.rent_stand'),
-            canInteract = function()
-                return not stands[prop] or not stands[prop].active
-            end,
-            onSelect = function()
-                OpenRentMenu(prop)
-            end
+    exports['qb-target']:AddTargetEntity(prop, {
+        options = {
+            {
+                type = "client",
+                event = "tj_stands:client:OpenRentMenu",
+                icon = "fas fa-shopping-cart",
+                label = locale('menu.rent_stand'),
+                canInteract = function(entity, distance)
+                    return not stands[prop] or not stands[prop].active
+                end,
+                args = { standProp = prop }
+            },
+            {
+                type = "client",
+                event = "tj_stands:client:OpenShopMenu",
+                icon = "fas fa-store",
+                label = locale('menu.browse_shop'),
+                canInteract = function(entity, distance)
+                    return stands[prop] and stands[prop].active
+                end,
+                args = { standProp = prop }
+            }
         },
-        {
-            name = 'tj_stands_shop_' .. prop,
-            icon = 'fas fa-store',
-            label = locale('menu.browse_shop'),
-            canInteract = function()
-                return stands[prop] and stands[prop].active
-            end,
-            onSelect = function()
-                OpenShopMenu(prop)
-            end
-        }
+        distance = 2.5
     })
     
     return prop
@@ -48,12 +49,12 @@ function InitializeStands()
     for _, stand in pairs(stands) do
         if DoesEntityExist(stand.prop) then
             DeleteEntity(stand.prop)
-            exports.ox_target:removeLocalEntity(stand.prop)
+            exports['qb-target']:RemoveTargetEntity(stand.prop)
         end
     end
     stands = {}
 
-    ESX.TriggerServerCallback('tj_stands:getActiveStands', function(activeStands)
+    QBCore.Functions.TriggerCallback('tj_stands:getActiveStands', function(activeStands)
         for i, standConfig in ipairs(Config.Stands) do
             local prop = CreateStandAtLocation(standConfig)
             local standData = {
@@ -86,7 +87,7 @@ end
 function OpenRentMenu(prop)
     currentStand = prop
     
-    ESX.TriggerServerCallback('tj_stands:getPlayerInventory', function(inventory)
+    QBCore.Functions.TriggerCallback('tj_stands:getPlayerInventory', function(inventory)
         SendNUIMessage({
             action = "openRent",
             inventory = inventory,
@@ -127,7 +128,7 @@ RegisterNUICallback('rentStand', function(data, cb)
         return
     end
 
-    ESX.TriggerServerCallback('tj_stands:rentStand', function(success, message)
+    QBCore.Functions.TriggerCallback('tj_stands:rentStand', function(success, message)
         if success then
             InitializeStands()
         end
@@ -141,7 +142,7 @@ RegisterNUICallback('purchaseItems', function(data, cb)
         return
     end
 
-    ESX.TriggerServerCallback('tj_stands:purchaseItems', function(success, message)
+    QBCore.Functions.TriggerCallback('tj_stands:purchaseItems', function(success, message)
         cb({ success = success, message = message })
     end, stands[currentStand].id, data)
 end)
@@ -152,8 +153,8 @@ RegisterNUICallback('closeUI', function(_, cb)
     cb({})
 end)
 
-RegisterNetEvent('esx:playerLoaded')
-AddEventHandler('esx:playerLoaded', function(xPlayer)
+RegisterNetEvent('QBCore:Player:SetPlayerData')
+AddEventHandler('QBCore:Player:SetPlayerData', function(PlayerData)
     InitializeStands()
 end)
 
@@ -168,7 +169,7 @@ AddEventHandler('onResourceStop', function(resourceName)
     for prop, _ in pairs(stands) do
         if DoesEntityExist(prop) then
             DeleteEntity(prop)
-            exports.ox_target:removeLocalEntity(prop)
+            exports['qb-target']:RemoveTargetEntity(prop)
         end
     end
 end)
