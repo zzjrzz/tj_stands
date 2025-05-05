@@ -34,6 +34,6 @@ A comprehensive marketplace system that allows players to rent stands and sell i
 
 ## 🔧 Dependencies
 
-- ESX Framework
+- QB-Core
+- qb-target
 - ox_lib
-- ox_target
