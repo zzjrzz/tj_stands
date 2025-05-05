@@ -1,7 +1,7 @@
 Config = {}
 
 -- Item Images Path
-Config.ItemImages = "nui://ox_inventory/web/images"
+Config.ItemImages = "images"
 
 -- Stand Configuration
 Config.Stands = {
