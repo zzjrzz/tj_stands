@@ -32,5 +32,5 @@ dependencies {
     'qb-core',
     'oxmysql',
     'qb-target',
-    'ox_inventory'
+    'qb-inventory'
 }
