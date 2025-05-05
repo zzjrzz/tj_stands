@@ -1,18 +1,20 @@
-local ESX = exports['es_extended']:getSharedObject()
+local QBCore = exports['qb-core']:GetCoreObject()
 lib.locale()
 
-ESX.RegisterServerCallback('tj_stands:getActiveStands', function(source, cb)
+QBCore.Functions.CreateCallback('tj_stands:getActiveStands', function(source, cb)
     local currentTime = os.time()
-    
+
     MySQL.query('SELECT s.*, GROUP_CONCAT(i.item_name, ":", i.quantity, ":", i.price) as items FROM marketplace_stands s LEFT JOIN marketplace_items i ON s.stand_id = i.stand_id WHERE s.rental_end > FROM_UNIXTIME(?) GROUP BY s.id', {currentTime}, function(results)
         local stands = {}
-        
+
         for _, stand in ipairs(results) do
             local items = {}
             if stand.items then
                 for item in string.gmatch(stand.items, "([^,]+)") do
                     local name, quantity, price = string.match(item, "([^:]+):([^:]+):([^:]+)")
-                    local itemLabel = ESX.GetItemLabel(name)
+                    local itemData = QBCore.Shared.Items[name]
+                    local itemLabel = itemData and itemData.label or name
+
                     items[name] = {
                         quantity = tonumber(quantity),
                         price = tonumber(price),
@@ -23,22 +25,24 @@ ESX.RegisterServerCallback('tj_stands:getActiveStands', function(source, cb)
             stand.items = json.encode(items)
             table.insert(stands, stand)
         end
-        
+
         cb(stands)
     end)
 end)
 
-ESX.RegisterServerCallback('tj_stands:getPlayerInventory', function(source, cb)
-    local xPlayer = ESX.GetPlayerFromId(source)
+QBCore.Functions.CreateCallback('tj_stands:getPlayerInventory', function(source, cb)
+    local Player = QBCore.Functions.GetPlayer(source)
     local items = {}
 
-    for _, item in pairs(xPlayer.getInventory()) do
-        if item.count and item.count > 0 then
-            items[item.name] = {
-                name = item.name,
-                label = item.label,
-                count = item.count
-            }
+    if Player then
+        for _, item in pairs(Player.PlayerData.items or {}) do
+            if item.amount and item.amount > 0 then
+                items[item.name] = {
+                    name = item.name,
+                    label = item.label,
+                    count = item.amount
+                }
+            end
         end
     end
 
@@ -50,8 +54,13 @@ ESX.RegisterServerCallback('tj_stands:getPlayerInventory', function(source, cb)
     cb(formatted)
 end)
 
-ESX.RegisterServerCallback('tj_stands:rentStand', function(source, cb, standId, data)
-    local xPlayer = ESX.GetPlayerFromId(source)
+QBCore.Functions.CreateCallback('tj_stands:rentStand', function(source, cb, standId, data)
+    local Player = QBCore.Functions.GetPlayer(source)
+
+    if not Player then
+        cb(false, locale('notifications.invalid_data'))
+        return
+    end
 
     if not data.items or type(data.items) ~= "table" then
         cb(false, locale('notifications.invalid_data'))
@@ -72,15 +81,15 @@ ESX.RegisterServerCallback('tj_stands:rentStand', function(source, cb, standId, 
 
         local cost = hours * Config.Rental.basePrice
 
-        if xPlayer.getAccount('bank').money < cost then
+        if Player.PlayerData.money['bank'] < cost then
             cb(false, locale('notifications.insufficient_funds'))
             return
         end
 
-        xPlayer.removeAccountMoney('bank', cost)
+        Player.Functions.RemoveMoney('bank', cost)
 
         MySQL.insert('INSERT INTO marketplace_stands (stand_id, owner, title, description, rental_start, rental_end) VALUES (?, ?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? HOUR))',
-            {standId, xPlayer.identifier, data.title or locale('menu.available'), data.description or "", hours},
+            {standId, Player.PlayerData.citizenid, data.title or locale('menu.available'), data.description or "", hours},
             function(standInsertId)
                 local validItems = {}
                 for itemName, itemData in pairs(data.items) do
@@ -96,7 +105,7 @@ ESX.RegisterServerCallback('tj_stands:rentStand', function(source, cb, standId, 
 
                 if #validItems == 0 then
                     MySQL.query('DELETE FROM marketplace_stands WHERE id = ?', {standInsertId})
-                    xPlayer.addAccountMoney('bank', cost)
+                    Player.Functions.AddMoney('bank', cost)
                     return cb(false, locale('notifications.set_quantity_price'))
                 end
 
@@ -116,7 +125,7 @@ ESX.RegisterServerCallback('tj_stands:rentStand', function(source, cb, standId, 
                             if inserted == #validItems then
                                 if success then
                                     for _, i in pairs(validItems) do
-                                        xPlayer.removeInventoryItem(i.name, i.quantity)
+                                        Player.Functions.RemoveItem(i.name, i.quantity)
                                     end
 
                                     TriggerClientEvent('tj_stands:standUpdated', -1)
@@ -124,7 +133,7 @@ ESX.RegisterServerCallback('tj_stands:rentStand', function(source, cb, standId, 
                                 else
                                     MySQL.query('DELETE FROM marketplace_stands WHERE id = ?', {standInsertId})
                                     MySQL.query('DELETE FROM marketplace_items WHERE stand_id = ?', {standId})
-                                    xPlayer.addAccountMoney('bank', cost)
+                                    Player.Functions.AddMoney('bank', cost)
                                     cb(false, locale('notifications.setup_failed'))
                                 end
                             end
@@ -136,21 +145,26 @@ ESX.RegisterServerCallback('tj_stands:rentStand', function(source, cb, standId, 
     end)
 end)
 
-ESX.RegisterServerCallback('tj_stands:purchaseItems', function(source, cb, standId, data)
-    local xPlayer = ESX.GetPlayerFromId(source)
+QBCore.Functions.CreateCallback('tj_stands:purchaseItems', function(source, cb, standId, data)
+    local Player = QBCore.Functions.GetPlayer(source)
+    if not Player then
+        cb(false, locale('notifications.invalid_data'))
+        return
+    end
+
     local totalCost = 0
     local items = {}
-    
+
     MySQL.query('SELECT * FROM marketplace_items WHERE stand_id = ?', {standId}, function(results)
         local available = {}
         for _, item in ipairs(results) do
             available[item.item_name] = {
                 quantity = item.quantity,
                 price = item.price,
-                label = ESX.GetItemLabel(item.item_name)
+                label = item.item_name
             }
         end
-        
+
         for itemName, quantity in pairs(data.items) do
             if not available[itemName] or available[itemName].quantity < quantity then
                 cb(false, locale('notifications.item_unavailable'))
@@ -159,50 +173,50 @@ ESX.RegisterServerCallback('tj_stands:purchaseItems', function(source, cb, stand
             totalCost = totalCost + (available[itemName].price * quantity)
             items[itemName] = quantity
         end
-        
+
         if data.paymentMethod == 'cash' then
-            if xPlayer.getMoney() < totalCost then
+            if Player.PlayerData.money['cash'] < totalCost then
                 cb(false, locale('notifications.insufficient_funds'))
                 return
             end
-            xPlayer.removeMoney(totalCost)
+            Player.Functions.RemoveMoney('cash', totalCost)
         else
-            if xPlayer.getAccount('bank').money < totalCost then
+            if Player.PlayerData.money['bank'] < totalCost then
                 cb(false, locale('notifications.insufficient_funds_bank'))
                 return
             end
-            xPlayer.removeAccountMoney('bank', totalCost)
+            Player.Functions.RemoveMoney('bank', totalCost)
         end
-        
+
         MySQL.single('SELECT owner FROM marketplace_stands WHERE stand_id = ?', {standId}, function(stand)
             if not stand then
                 cb(false, locale('notifications.stand_not_found'))
                 return
             end
-            
-            local owner = ESX.GetPlayerFromIdentifier(stand.owner)
-            if owner then
-                owner.addAccountMoney('bank', totalCost)
-                TriggerClientEvent('esx:showNotification', owner.source, locale('notifications.sale_notification', totalCost))
+
+            local Owner = QBCore.Functions.GetPlayerByCitizenId(stand.owner)
+            if Owner then
+                Owner.Functions.AddMoney('bank', totalCost)
+                TriggerClientEvent('QBCore:Notify', Owner.PlayerData.source, locale('notifications.sale_notification', totalCost), 'success')
             else
-                MySQL.query('UPDATE users SET accounts = JSON_SET(accounts, "$.bank", JSON_EXTRACT(accounts, "$.bank") + ?) WHERE identifier = ?', 
+                MySQL.query('UPDATE players SET money = JSON_SET(money, "$.bank", JSON_EXTRACT(money, "$.bank") + ?) WHERE citizenid = ?', 
                     {totalCost, stand.owner})
             end
-            
+
             for itemName, quantity in pairs(items) do
                 MySQL.query('SELECT quantity FROM marketplace_items WHERE stand_id = ? AND item_name = ?', 
                     {standId, itemName}, function(result)
                         if result[1] and result[1].quantity - quantity <= 0 then
-                            MySQL.query('DELETE FROM marketplace_items WHERE stand_id = ? AND item_name = ?',
+                            MySQL.query('DELETE FROM marketplace_items WHERE stand_id = ? AND item_name = ?', 
                                 {standId, itemName})
                         else
-                            MySQL.query('UPDATE marketplace_items SET quantity = quantity - ? WHERE stand_id = ? AND item_name = ?',
+                            MySQL.query('UPDATE marketplace_items SET quantity = quantity - ? WHERE stand_id = ? AND item_name = ?', 
                                 {quantity, standId, itemName})
                         end
-                end)
-                xPlayer.addInventoryItem(itemName, quantity)
+                    end)
+                Player.Functions.AddItem(itemName, quantity)
             end
-            
+
             TriggerClientEvent('tj_stands:standUpdated', -1)
             Wait(500)
             CleanupEmptyStands()
